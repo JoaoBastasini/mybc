@@ -1,0 +1,24 @@
+# Ignora executáveis comuns no Linux/macOS (sem extensão)
+# O asterisco duplo ignora em qualquer subdiretório
+**/*.exe
+**/*.out
+**/*.bin
+**/*.o
+**/*.dll
+
+# Ignora executáveis em geral
+# Arquivos sem extensão, mas marcados como executáveis
+# **Atenção:** isso pode ignorar scripts que você queira versionar.
+# Use com cautela ou seja mais específico.
+# *
+
+# Ignora arquivos tar.gz (do make)
+**/*.tar.gz
+**/*.tgz
+
+# Outros formatos de compactação/arquivo de sistema que podem ser úteis ignorar:
+# **/*.zip
+# **/*.rar
+# **/*.7z
+# **/*.log
+# **/*.tmp
