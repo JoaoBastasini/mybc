@@ -27,6 +27,50 @@ double vmem[VMEMSIZE];
 char symtab[VMEMSIZE][MAXIDLEN+1];
 int symtab_next_entry = 0;
 
+//array com os nomes dos tokens, para retornar ao invés do número associado
+static const char *token_names[] = {
+	"ID",
+	"OCT",
+	"HEX",
+	"DEC",
+	"FLT",
+	"ASGN",
+	"EXIT",
+	"QUIT"
+};
+
+static const char *get_token_name(int token_code) {
+	if (token_code == '\n') return "'\\n'"; //tratamento especial para nova linha
+    if (token_code == EOF) return "EOF"; //tratamento especial para EOF
+
+    //para tokens ASCII imprimíveis (códigos 1 a 255), não entra no loop se for um caractere não-imprimível (ex: '\n')
+    if (token_code > 0 && token_code <= 255 && isprint(token_code)) {
+		//cria uma string temporária para retornar o caractere entre aspas simples
+        static char temp_name[4]; 
+		// \ é escape para imprimir aspas simples
+        temp_name[0] = '\'';
+        temp_name[1] = (char)token_code;
+        temp_name[2] = '\'';
+        temp_name[3] = '\0';
+        return temp_name;
+    }
+
+    //para tokens definidos em tokens.h (código >= 1024)
+    if (token_code >= ID && token_code <= QUIT) {
+        //ID é 1024, no array é 0, a posição no array é 'token_code - ID'
+        return token_names[token_code - ID];
+    }
+
+    //para EOF, que é -1 (parser.c já lida com ele, mas não custa nada)
+    if (token_code == EOF) {
+        return "EOF";
+    }
+
+    //se for um caractere de controle, não-imprimível ou um código desconhecido
+    return "UNKNOWN_TOKEN";
+}
+
+
 //fazer na mão ou criar pseudo-comandos
 //LVAL := RVAL
 int cursor;
@@ -240,7 +284,7 @@ void match(int expected_token)
 		lookahead = gettoken(source);
 	} else {
 		fprintf(stderr, "token mismatch error at line %d, column %d\n", token_lineno, token_colno);
-    	fprintf(stderr, "found (%s) but expected (%c)\n", lexeme, expected_token);
+    	fprintf(stderr, "found (%s) but expected (%s)\n", lexeme, get_token_name(expected_token));
     	exit(ERRTOKEN);
 	}
 }
