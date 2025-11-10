@@ -101,32 +101,40 @@ void store(char *symbol, double lval) //reversa do recall, usado como LVAL
 /*Esta versão é feita para ser chamada pelo novo main.c (com fgets).
   Ela NÃO é um loop infinito. Ela processa a linha atual (que está
   na fonte 'source' em memória) e então retorna.*/
-void mybc(void)
+int mybc(void)
 {
 	//O loop while(1) agora está no main.c.
 	//Este loop while(lookahead != EOF) vai processar
 	//a linha inteira que o fmemopen() criou.
+	int status;
+
 	while (lookahead != EOF) {
-		
 		//Tratamento para 'exit' e 'quit'
 		if (lookahead == EXIT || lookahead == QUIT) {
 			match(lookahead);
-			exit(0);
+			exit(0); //encerrar o programa (apenas quando há intenção, não por erro)
 		}
 
 		//Processa o comando (ex: "5+6" ou "a := 10")
-		cmd();
+		status = cmd();
+
+		//propaga erro (se houve erro no cmd, retorna ERRTOKEN para main.c)
+		if (status == ERRTOKEN) {
+			return ERRTOKEN;
+		}
 
 		//Após processar um comando, esperamos um separador (;)
 		//ou um fim de linha (\n) ou o fim da fita (EOF).
 		
 		if (lookahead == ';') {
-			match(';');
+			status = match(';');
+			if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 			//Se for ';', o loop continua para o próximo comando
 			continue;
 		} 
 		else if (lookahead == '\n') {
-			match('\n');
+			status = match('\n');
+			if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 			//Se for '\n', o loop continua (caso haja algo
 			//inesperado depois, como em "5+5 4")
 			continue; 
@@ -138,17 +146,18 @@ void mybc(void)
 			//Se chegou aqui, é um erro. (ex: "5 5")
 			//O lookahead é um token inesperado (ex: DEC).
 			//Forçamos o erro de "esperava \n"
-			match('\n'); 
+			status = match('\n');
+			if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 		}
 	}
 	
 	//Fim da linha (EOF) foi alcançado.
-	//A função agora termina e retorna para o loop while(1) no main.c.
-	return;
+	return 0; //sem erros
 }
 
-void cmd(void)
+int cmd(void)
 {
+	int status = 0;
 	switch(lookahead){
 		case EXIT:
 		case QUIT:
@@ -162,13 +171,15 @@ void cmd(void)
 		case HEX:
 		case FLT:
 		case DEC:
-			E();
+			status = E();
+			if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 			/**/printf("%lg\n", acc);
 			break;
 		//Palavra nula
 		default:
 			;
 	}
+	return status;
 }
 
 // /**/ = AÇÃO SEMÂNTICA
@@ -178,54 +189,72 @@ void cmd(void)
  *  input: "a * b"
  *  token: ID '*' ID
  */
-void E(void) 
+int E(void) 
 {
 	/**/char variable[MAXIDLEN + 1];
 	/**/int oplus_flg = 0;/**/
 	/**/int otimes_flg = 0;/**/
 	/**/int ominus_flg = 0;/**/
+
+	int status = 0;
+
 	// [ ominus ]; ominus = '+'|'-'
 	if (lookahead == '+' || lookahead == '-') {
 		/**/if (lookahead == '-') {
 			ominus_flg = lookahead;
 		}/**/
-		match(lookahead);
+		status = match(lookahead);
+		if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 	}
 _Tbegin:
 _Fbegin:
 	switch(lookahead) {
 		//xpr entre parênteses
 		case '(':
-			match('('); E(); match(')');
+			status = match('(');
+			if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
+			status = E();
+			if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
+			status = match(')');
+			if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 			break;
+
 		//constantes
 		case HEX:
 			/**/ acc = strtol(lexeme, NULL, 0);/**/
-			match(HEX); break;
+			status = match(HEX); break;
 		case OCT:
 			/**/ acc = strtol(lexeme, NULL, 0);/**/
-			match(OCT); break;
+			status = match(OCT); break;
 		case DEC:
 			/**/ acc = atoi(lexeme);/**/
-			match(DEC); break;
+			status = match(DEC); break;
 		case FLT:
 			/**/ acc = atof(lexeme);/**/
-			match(FLT); break;
-		default:
+			status = match(FLT); break;
+		
 		//variáveis
+		default:
 			/**/strcpy(variable, lexeme);/**/ 
-			match(ID);
+			status = match(ID);
+			if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
+
 			// cheque operador atribuição, ":=" => ASGN
 			if (lookahead == ASGN) {
 				// variable := express
-				match(ASGN);
-				E();
+				status = match(ASGN);
+				if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
+				status = E();
+				if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 				/**/store (variable, acc);/**/
 			} else { //se não vier operador atribuição
 				//recall previously stored floating value
 				/**/acc = recall(variable);/**/
 			}
 	}
+
+//pega erro dos matches de constantes ou ID, ao invés de fazer em cada case
+if (status == ERRTOKEN) return ERRTOKEN; 
 
 	// se chegou operador multiplicativo é porque já houve uma entrada no acc como 1° operando
 	/**/if (otimes_flg) {
@@ -246,7 +275,8 @@ _Fbegin:
 		sp++;
 		stack[sp] = acc;
 		/**/
-		match(lookahead);
+		status = match(lookahead);
+		if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 		goto _Fbegin;
 	}
 	/**/if (ominus_flg) {
@@ -271,20 +301,26 @@ _Fbegin:
 		sp++;
 		stack[sp] = acc;
 		/**/
-		match(lookahead);
+		status = match(lookahead);
+		if (status == ERRTOKEN) return ERRTOKEN; //propaga erro
 		goto _Tbegin;
 	}
+	return 0; //sem erros
 }
 
 /*** A principal função (procedimento) interface do parser é match: */
 
-void match(int expected_token)
+int match(int expected_token)
 {
 	if (lookahead == expected_token) {
 		lookahead = gettoken(source);
 	} else {
+		const char *found_name = get_token_name(lookahead); //token que achou
+        const char *expected_name = get_token_name(expected_token); //token que esperava
+
 		fprintf(stderr, "token mismatch error at line %d, column %d\n", token_lineno, token_colno);
-    	fprintf(stderr, "found (%s) but expected (%s)\n", lexeme, get_token_name(expected_token));
-    	exit(ERRTOKEN);
+    	fprintf(stderr, "found (%s) but expected (%s)\n", found_name, expected_name);
+    	return ERRTOKEN;
 	}
+	return 0;
 }

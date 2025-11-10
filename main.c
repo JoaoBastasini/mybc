@@ -66,6 +66,7 @@ int main(void)
 {
 	char *line_from_user; //Buffer do linenoise
 	char *line_with_newline; //Buffer para o fmemopen
+	int status; //status de retorno das funções (sucesso ou erro)
 	
 	printf("Mini-BC Interpretador. Digite 'quit' ou 'exit' para sair.\n");
 
@@ -107,8 +108,15 @@ int main(void)
 		//Puxa o primeiro token da nossa fonte em memória
 		lookahead = gettoken(source);
 
-		//Chama o parser
-		mybc();
+		//Chama o parser e verifica se teve erro
+		status = mybc();
+		
+/*
+		if (status == ERRTOKEN) {
+			//aconteceu um erro. A mensagem já foi mostrada, continua para limpeza e próx linha
+			continue;
+		}
+*/
 
 
 		//Limpeza
