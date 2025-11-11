@@ -307,7 +307,7 @@ void skipspaces(FILE *tape)
 {
 	int head;
 
-	//A MÁGICA ESTÁ AQUI: "&& head != '\n'"
+	//&& head != '\n'
 	while ( isspace(head = next_char(tape)) && head != '\n' )
 	{
 		//O loop continua vazio, e isso está CORRETO.
