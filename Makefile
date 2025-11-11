@@ -21,6 +21,6 @@ mostlyclean: clean
 
 #Entrega
 targz:
-	tar zcvf mybc_grp1_`date "+%Y%m%d"`.tar.gz Makefile *.[ch] ./versioned
+	tar zcvf mybc_grp1.tar.gz Makefile *.[ch] ./versioned
 #Se o .tar.gz ainda não existir no diretório: make targz
 #Pra extrair: tar zxvf mybc.tar.gz
