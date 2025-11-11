@@ -90,10 +90,15 @@ int main(void)
 		//O parser/lexer espera um '\n' no final de cada comando.
 		line_with_newline = malloc(strlen(line_from_user) + 2); //+1 para \n, +1 para \0
 		sprintf(line_with_newline, "%s\n", line_from_user);
-
+		
+		//Verifica se a chamada de fmemopen() falhou (ex: por falta de memória).
 		source = fmemopen(line_with_newline, strlen(line_with_newline), "r");
 		if (source == NULL) {
+			//perror() é uma função útil que imprime sua mensagem ("fmemopen")
+    		//seguida pela mensagem de erro oficial do sistema (ex: "Cannot allocate memory").
 			perror("fmemopen");
+			//Sai do programa imediatamente com um código de erro, pois
+    		//não podemos continuar se a fonte de entrada não puder ser criada.
 			exit(1);
 		}
 
