@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>    //Para fmemopen, strlen
+#include <errno.h>     //Inclui biblioteca para manipulação de erros (Ctrl C)
 #include "parser.h"    //Inclui tudo (lexer.h, tokens.h, etc.)
 #include "linenoise.h"
 
@@ -64,28 +65,37 @@ extern int lookahead;
 
 int main(void)
 {
-	char *line_from_user; //Buffer do linenoise
-	char *line_with_newline; //Buffer para o fmemopen
-	int status; //status de retorno das funções (sucesso ou erro)
-	
-	printf("Mini-BC Interpretador. Digite 'quit' ou 'exit' para sair.\n");
+    char *line_from_user; //Buffer do linenoise
+    char *line_with_newline; //Buffer para o fmemopen
+    int status; //status de retorno das funções (sucesso ou erro)
+    
+    printf("Mini-BC Interpretador. Digite 'quit' ou 'exit' para sair.\n");
 
-	//Este é o novo Loop Principal (REPL)
-	//linenoise() mostra o prompt e lida com setas, histórico, etc.
-	while ( (line_from_user = linenoise("mybc> ")) != NULL ) {
-		
-		//Se a linha estiver vazia, apenas continue
-		if (line_from_user[0] == 0) {
-			linenoiseFree(line_from_user); //linenoise usa sua própria free
-			continue;
-		}
+    //Este é o Loop Principal (REPL - Read-Eval-Print-Loop)
+    while (1) {
+        line_from_user = linenoise("mybc> ");
+        if (line_from_user == NULL) {
+            // errno é EAGAIN quando Ctrl C é apertado
+            if (errno == EAGAIN) {
+                // acaba com o input atual e vai para um próximo limpo (sem dar a resposta ou o erro)
+                continue;
+            }
+            // Ctrl D ou outro erro ainda encerra o programa
+            break;
+        }
 
-		//Adiciona a linha ao histórico (para a Seta Cima)
-		linenoiseHistoryAdd(line_from_user);
+        //Se a linha estiver vazia, apenas continue
+        if (line_from_user[0] == 0) {
+            linenoiseFree(line_from_user); //linenoise usa sua própria free
+            continue;
+        }
+
+        //Adiciona a linha ao histórico (para a Seta Cima)
+        linenoiseHistoryAdd(line_from_user);
 
 
-		//A "Ponte" para o Lexer
-		//-----------------------------------------------------------------
+        //A "Ponte" para o Lexer
+        //-----------------------------------------------------------------
 		
 		//O parser/lexer espera um '\n' no final de cada comando.
 		line_with_newline = malloc(strlen(line_from_user) + 2); //+1 para \n, +1 para \0
