@@ -3,7 +3,7 @@ Implementação de um interpretador simples para expressões aritméticas, basea
 
 Ele suporta operações aritméticas básicas, precedência de operadores, parênteses, atribuição de variáveis e números em formato decimal, hexadecimal e octal.
 
-## Recursos
+## <br>Recursos
 - REPL interativo: Um shell `mybc>` que permite entrada interativa.
 - Edição de linha: Suporte completo a setas (esquerda, direita), backspace e delete, graças à biblioteca `linenoise`.
 - Histórico de comandos: Pressione a seta cima/baixo para navegar pelos comandos anteriores.
@@ -12,14 +12,14 @@ Ele suporta operações aritméticas básicas, precedência de operadores, parê
 - Formatos numéricos: Entende 123 (DEC), 0x1F (HEX) e 077 (OCT).
 - Rastreamento de erro: Reporta token mismatch errors com o número exato da linha e coluna onde o erro ocorreu.
 
-## Requisitos
+## <br>Requisitos
 * Um ambiente de compilação C padrão (ex: `gcc` ou `clang`).
 * A ferramenta `make` (presente na maioria dos sistemas Linux/Unix).
 * `git` para a aquisição do código-fonte.
 
 O projeto não possui dependências de bibliotecas *externas* que necessitem de instalação prévia (como a `GNU Readline`), pois a biblioteca `linenoise` (para edição de linha) é compilada localmente junto ao código-fonte.
 
-## Compilação e Execução
+## <br>Compilação e Execução
 O processo de compilação e execução deve ser realizado através de um terminal (seja um terminal de sistema ou um terminal integrado de uma IDE).
 1. Aquisição do código (`clone`): primeiro, clone o repositório do projeto para sua máquina local:
     ```
@@ -53,7 +53,7 @@ O processo de compilação e execução deve ser realizado através de um termin
     Saindo.
     ```
 
-## Arquitetura e fluxo de execução
+## <br>Arquitetura e fluxo de execução
 O fluxo de dados é desacoplado em um "Front-End" (que lida com o input do usuário) e um "Back-End" (que processa a linguagem).
 
 ### Fase 1: O "Front-End" (REPL em main.c + linenoise)**
@@ -63,7 +63,7 @@ Ela captura as teclas do usuário, lida com as setas (movendo o cursor) e o hist
 3. Quando o usuário pressiona Enter, a linenoise retorna uma string limpa (ex: "a := 10 + 5").
 
 ### Fase 2: A "Ponte" (Conectando Front e Back)**
-<br>O "Back-End" (lexer.c) foi projetado para ler de um FILE*, mas o "Front-End" (linenoise) nos deu uma string. O main.c faz a "ponte" entre eles:
+O "Back-End" (lexer.c) foi projetado para ler de um FILE*, mas o "Front-End" (linenoise) nos deu uma string. O main.c faz a "ponte" entre eles:
 1. Uma nova string é alocada, e um \n é adicionado ao final (ex: "a := 10 + 5\n"). Isso é crucial, pois o parser.c espera um \n para finalizar um comando.
 2. A função fmemopen() é chamada. Esta é a "mágica": ela cria um FILE* falso que, em vez de ler de um disco, lê da nossa string na memória.
 3. A variável global source (que o lexer.c usa) é apontada para este FILE* em memória.
@@ -82,7 +82,7 @@ Ela captura as teclas do usuário, lida com as setas (movendo o cursor) e o hist
 2. O main.c chama fclose(source) (para fechar o FILE* da memória) e free() nos buffers de string.
 3. O loop while(1) do main.c repete, e voltamos à Fase 1.
 
-## Visão geral dos arquivos
+## <br>Visão geral dos arquivos
 - **main.c**: Lida com o REPL (Read-Eval-Print Loop), o `linenoise`, e a "ponte" `fmemopen`.
 - **linenoise.c / .h**: Biblioteca de Front-End. Lida com a interface do usuário (setas, histórico).
 - **parser.c / .h**: Contém a lógica da gramática (`mybc`, `cmd`, E), a Tabela de Símbolos (`symtab`) e a função `match()`.
@@ -90,7 +90,7 @@ Ela captura as teclas do usuário, lida com as setas (movendo o cursor) e o hist
 - **tokens.h**: O "dicionário". Um enum que define os tokens (ex: `ID`, `HEX`, `ASGN`) para que o lexer e o parser falem a mesma língua.
 - **Makefile**: Instruções de compilação.
 
-## Créditos e agradecimentos
+## <br>Créditos e agradecimentos
 Este projeto utiliza a biblioteca `linenoise` para fornecer uma experiência de terminal interativa com edição de linha e histórico. Ela encontra-se disponível no repositório [antirez/linenoise](https://github.com/antirez/linenoise).
 
 A `linenoise` é uma alternativa leve e de arquivo único à `GNU Readline`, criada por **Salvatore Sanfilippo ("antirez")** e **Pieter Noordhuis ("pnoordhuis")**. Ela é distribuída sob a licença BSD 2-Clause e foi incluída diretamente no código-fonte deste projeto para garantir a portabilidade e eliminar dependências externas.
